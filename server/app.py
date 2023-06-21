@@ -18,6 +18,11 @@ db.init_app(app)
 
 api = Api(app)
 
+@app.before_request
+def check_member():
+    if not session.get("user_id") and "member" in request.endpoint:
+        return make_response({}, 401)
+        
 class ClearSession(Resource):
 
     def delete(self):
@@ -87,12 +92,14 @@ class CheckSession(Resource):
 class MemberOnlyIndex(Resource):
     
     def get(self):
-        pass
+        return make_response([article.to_dict() for article 
+                              in Article.query.filter(Article.is_member_only == True).all()], 
+                             200)
 
 class MemberOnlyArticle(Resource):
     
     def get(self, id):
-        pass
+        return make_response(Article.query.filter(Article.id == id).first().to_dict(), 200)
 
 api.add_resource(ClearSession, '/clear', endpoint='clear')
 api.add_resource(IndexArticle, '/articles', endpoint='article_list')
